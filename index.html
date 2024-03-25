@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Render Responses</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* Additional CSS styles */
+        .response-body {
+            cursor: pointer;
+            text-decoration: underline;
+            color: blue;
+        }
+
+        .response-excerpt {
+            max-width: 300px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-md-6">
+                <!-- Search bar -->
+                <input type="text" class="form-control mb-3" id="searchInput" placeholder="Search...">
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                <!-- Response table -->
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th onclick="sortTable(0)">Model</th>
+                            <th onclick="sortTable(1)">Top P</th>
+                            <th onclick="sortTable(2)">Top K</th>
+                            <th onclick="sortTable(3)">Temperature</th>
+                            <th>Response</th>
+                        </tr>
+                    </thead>
+                    <tbody id="responseTableBody">
+                        <!-- Response items will be rendered here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Full response modal -->
+    <div class="modal fade" id="fullResponseModal" tabindex="-1" role="dialog" aria-labelledby="fullResponseModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="fullResponseModalLabel">Full Response</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div id="fullResponseContent"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS and jQuery -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Marked.js for Markdown rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <script>
+        // Wait for document to be ready
+        document.addEventListener("DOMContentLoaded", function() {
+            // Function to render responses
+            function renderResponses(responses) {
+                var responseTableBody = document.getElementById('responseTableBody');
+    
+                // Iterate through each response
+                responses.forEach(function(response) {
+                    var responseRow = '<tr>';
+                    // Render model and parameters
+                    responseRow += '<td>' + response.model + '</td>';
+                    responseRow += '<td>' + response.top_p + '</td>';
+                    responseRow += '<td>' + response.top_k + '</td>';
+                    responseRow += '<td>' + response.temp + '</td>';
+                    // Render response excerpt with modal link
+                    responseRow += '<td><span class="response-excerpt response-body" data-toggle="modal" data-target="#fullResponseModal" data-content="' + response.response + '">' + truncate(response.response, 100) + '</span></td>';
+                    responseRow += '</tr>';
+                    responseTableBody.innerHTML += responseRow;
+                });
+    
+                // Search functionality
+                document.getElementById('searchInput').addEventListener('keyup', function() {
+                    var searchText = this.value.toLowerCase();
+                    var rows = document.querySelectorAll('#responseTableBody tr');
+                    rows.forEach(function(row) {
+                        var content = row.textContent.toLowerCase();
+                        if (content.indexOf(searchText) === -1) {
+                            row.style.display = 'none';
+                        } else {
+                            row.style.display = 'table-row';
+                        }
+                    });
+                });
+            }
+    
+            // Sort table by column index
+            function sortTable(columnIndex) {
+                var table, rows, switching, i, x, y, shouldSwitch;
+                table = document.querySelector('table');
+                switching = true;
+                while (switching) {
+                    switching = false;
+                    rows = table.rows;
+                    for (i = 1; i < (rows.length - 1); i++) {
+                        shouldSwitch = false;
+                        x = rows[i].getElementsByTagName('td')[columnIndex];
+                        y = rows[i + 1].getElementsByTagName('td')[columnIndex];
+                        if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
+                            shouldSwitch = true;
+                            break;
+                        }
+                    }
+                    if (shouldSwitch) {
+                        rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+                        switching = true;
+                    }
+                }
+            }
+    
+            // Show full response content in modal
+            document.addEventListener('click', function(event) {
+                if (event.target.classList.contains('response-body')) {
+                    var fullResponseContent = event.target.getAttribute('data-content');
+                    document.getElementById('fullResponseContent').innerHTML = marked.parse(fullResponseContent);
+                }
+            });
+    
+            // Load responses from response.json
+            fetch('response.json')
+                .then(response => response.json())
+                .then(data => renderResponses(data))
+                .catch(error => console.error("Error loading responses:", error));
+        });
+
+        // Function to truncate text
+        function truncate(text, maxLength) {
+            return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+        }
+    </script>
+    
+
+</body>
+</html>
