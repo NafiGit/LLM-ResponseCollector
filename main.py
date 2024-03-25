@@ -6,8 +6,8 @@ import sys
 try:
     from langchain_community.llms import Ollama
 except ImportError:
-    print("Dependency 'langchain_community' not found. Installing...")
-    os.system("pip install langchain_community")
+    print("Dependency 'langchain' not found. Installing...")
+    os.system("pip install langchain")
     from langchain_community.llms import Ollama
 
 # Function to load JSON data from file safely
