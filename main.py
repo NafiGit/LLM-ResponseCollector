@@ -1,13 +1,42 @@
 import json
-from langchain_community.llms import Ollama
+import os
+import sys
 
-# Load prompts from prompts.json file
-with open('prompts.json', 'r') as prompts_file:
-    prompts = json.load(prompts_file)
+# Check if dependencies are installed, if not, install them
+try:
+    from langchain_community.llms import Ollama
+except ImportError:
+    print("Dependency 'langchain_community' not found. Installing...")
+    os.system("pip install langchain_community")
+    from langchain_community.llms import Ollama
 
-# Load model configurations from models.json file
-with open('models.json', 'r') as models_file:
-    models = json.load(models_file)
+# Function to load JSON data from file safely
+def load_json(file_path):
+    try:
+        with open(file_path, 'r') as file:
+            return json.load(file)
+    except FileNotFoundError:
+        print(f"File '{file_path}' not found.")
+        sys.exit(1)
+    except json.JSONDecodeError:
+        print(f"Error decoding JSON from '{file_path}'.")
+        sys.exit(1)
+
+# Function to save JSON data to file safely
+def save_json(file_path, data):
+    with open(file_path, 'w') as file:
+        json.dump(data, file, indent=4)
+
+# File paths
+prompts_file_path = 'prompts.json'
+models_file_path = 'models.json'
+response_file_path = 'response.json'
+
+# Load prompts from file
+prompts = load_json(prompts_file_path)
+
+# Load model configurations from file
+models = load_json(models_file_path)
 
 # Initialize list to store response data
 response_data = []
@@ -35,7 +64,11 @@ for prompt in prompts:
                     )
 
                     # Invoke the model to get response for the prompt
-                    model_response = model.invoke(prompt_text)
+                    try:
+                        model_response = model.invoke(prompt_text)
+                    except Exception as e:
+                        print(f"Error invoking model '{model_name}': {e}")
+                        continue
                     
                     # Collect necessary details for the response
                     response_details = {
@@ -52,9 +85,8 @@ for prompt in prompts:
                     print(response_details)
                     
                     # Save responses to response.json file progressively
-                    with open('response.json', 'w') as response_file:
-                        json.dump(response_data, response_file, indent=4)
-                        print("Response saved to response.json.")
+                    save_json(response_file_path, response_data)
+                    print("Response saved to response.json.")
 
 # Print a message when all responses are saved
 print("All responses saved to response.json.")
