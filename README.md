@@ -1,5 +1,5 @@
 # Response collector - LLM Software Package Hallucination Research
-- The script provided is a response collector for conducting hallucination research using the LLM (Large Language Model) software package.
+- The script provided is a response collector for conducting software package hallucination research using the LLM (Large Language Model).
 - It automates the process of generating responses from LLMs with different parameter combinations for provided prompts.
 - The generated responses are collected and stored for further analysis and evaluation in the context of hallucination research.
 
